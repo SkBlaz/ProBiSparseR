@@ -10,15 +10,19 @@
 
 ValidateProBiS <- function (file1){
   interaction_file <- unique(file1)
-  if (nchar(interaction_file$V3 != 5)){
-    print ("Invalid PDB accession numbers! Please Check your input file.")
-    
-  }else if (nchar(interaction_file$V4 != 3)){
-    
-    print ("Invalid amino acid code! Please Check your input file.")
-    
-  }
+  flen<-nrow(interaction_file)
+  by(interaction_file, 1:flen, function(row) 
+      if (length(row[3])>5){
+      print(paste("Found suspicious entry! ", row))
+        }
+#       if (row[5]%%1!=0){
+#         print(paste("invalid locus entry", row))
+#       }
+    )
+  print("PDB codes validated!")
 }
+
+
 
 #' Function to display predicted area of interaction
 #'
@@ -42,10 +46,11 @@ predictedArea<- function (interaction_file){
 #' @keywords ProBiSmaxLoci
 #' @export
 #' @examples
-#' mostCommonInteraction(imported_file_name e.g. mol1.lig)
+#' mostCommonInteraction(imported_file_name e.g. mol1.lig, 15)
 
-mostCommonInteraction<- function (interaction_file){
-  mci<-sort(table(interaction_file))
+mostCommonInteraction<- function (interaction_file, topn){
+  print("trying to generate table of interaction partners...")
+  mci<-tail(sort((table(interaction_file$V8))),topn)
   print(mci)
 }
 
@@ -82,7 +87,7 @@ barplot(tail(sort(table(ifile$V5)),top), ylim=c(0, maxval+5),
         las=3,
         xlab=c("Locus on whole protein sequence"),
         ylab=c("Number of predicted interactions"))
-text(45,maxval, paste("Loci with most interactions> ",maxval))
+text(top/2,maxval, paste("Loci with most interactions> ",maxval))
 }
 
 #' Function to display unique interactions present according to PDBs
@@ -95,7 +100,7 @@ text(45,maxval, paste("Loci with most interactions> ",maxval))
 #' interactionList(imported_file_name e.g. mol1.lig)
 
 interactionList <- function (interaction_file){
-  pdbs<-paste(gp.1wb0A$V3, gp.1wb0A$V8, sep="-")
+  pdbs<-paste(interaction_file$V3, interaction_file$V8, sep="-")
   print("unique interactions detected>")
   print(unique(pdbs))
 }
@@ -120,13 +125,14 @@ probisSummary<- function(interaction_file){
   maxval<-max(sort(table(interaction_file$V5)))
   print ("Maximum number of detected interactions on one loci>")
   print (maxval)
-  pdbs<-paste(gp.1wb0A$V3, gp.1wb0A$V8, sep="-")
+  pdbs<-paste(interaction_file$V3, interaction_file$V8, sep="-")
   print("List of unique interactions detected>")
   print(unique(pdbs))
   par(mfrow=c(2,2))
-  sizes<- c(length(unique(interaction_file$V5))/4,
-            length(unique(interaction_file$V5))/2,
-            length(unique(interaction_file$V5))*0.75,length(unique(interaction_file$V5)))
+  sizes<- c(length(unique(interaction_file$V5))/10,
+            length(unique(interaction_file$V5))/5,
+            length(unique(interaction_file$V5))*0.5,
+            length(unique(interaction_file$V5)))
   for (h in sizes){
     plotbc(interaction_file, h)
   }
